@@ -1,33 +1,32 @@
 const express = require("express");
-const controller = express.Router();
+const { getAllStudents, getStudentById } = require("../queries/studentsQueries");
+const studentsController = express.Router();
 
-const studentData = require("../studentData.json");
-
-controller.get("/", (request, response) => {
-  response.json(studentData);
-});
-
-controller.get("/:id", (request, response) => {
+studentsController.get("/", (request, response) => {
   try {
-    const studentId = request.params.id;
-
-    if (!/[0-9]/.test(studentId)) {
-      response.send("Student id must be a number.");
-      return;
-    }
-
-    const singleStudent = studentData.students.find((student) => {
-      return student.id === studentId;
-    });
-
-    if (singleStudent) {
-      response.json(singleStudent);
-    } else {
-      response.send("student not found");
-    }
-  } catch (e) {
-    response.status(500).send("error");
+    const students = getAllStudents();
+    response.status(200).json({data: students})
+  } catch (err) {
+    response.status(500).json({error : err.message})
   }
 });
 
-module.exports = controller;
+studentsController.get("/:id", (request, response) => {
+  try {
+    const { id } = request.params;
+    const student = getStudentById(id);
+
+    if (student) {
+      // return 200
+      return response.status(200).json({ data: student });
+    }
+    // return 404
+    response
+      .status(404)
+      .json({ error: `Could not find student with id ${id}` });
+  } catch (err) {
+    response.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = studentsController;
